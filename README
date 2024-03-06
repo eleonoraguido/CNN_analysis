@@ -1,0 +1,5 @@
+This program reads a .npz file, previously created by merging together the data of interest 
+from two different particle species (generally photons and protons).
+
+A CNN model is defined.
+
