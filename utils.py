@@ -16,4 +16,4 @@ def read_config(config_file):
     """
     with open(config_file, 'r') as f:
         config = json.load(f)
-    return config.get('input_file')
+    return config.get('input_file'), config.get('test_sample_size')
