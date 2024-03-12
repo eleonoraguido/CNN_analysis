@@ -1,2 +1,2 @@
 #!/bin/bash
-source ../../python_envs/CNN_photon_analysis/bin/activate 
+source /data/auger8/python_envs/CNN_analysis/bin/activate 

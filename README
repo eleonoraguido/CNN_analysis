@@ -1,5 +1,19 @@
 This program reads a .npz file, previously created by merging together the data of interest 
 from two different particle species (generally photons and protons).
 
-A CNN model is defined.
+A CNN model is defined and trained.
+
+Some arguments can be passed through the config file (example config.json):
+    -Path to the input file + input file name
+    -Fraction of the data set that won't be used for training (test data set fraction)
+    -Number of epochs
+    -Batch size
+    -Additional information to be printed in the output file name
+    -Regularizer parameter L1 (penalty applied to absolute value of weights, 0-0.1)
+    -Regularizer parameter L2 (penalty applied to square of weights, 0-0.1)
+
+
+How to run the program:
+source activate_env.sh
+python3 main.py config.json
 

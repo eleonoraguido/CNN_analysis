@@ -23,7 +23,7 @@ def load_file(input_file: str)-> dict:
     # Load the compressed NumPy file
     data = np.load(input_file)
 
-    print("Start loading the file: \n " + input_file)
+    print("\n\nStart loading the file: \n " + input_file)
     # Check the keys of the loaded data
     print(" \t Keys in the compressed file:  ", data.files)
 
