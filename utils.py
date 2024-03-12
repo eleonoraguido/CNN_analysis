@@ -1,7 +1,18 @@
+import sys, os
 import json
 import numpy as np
+from keras.models import model_from_json
+from tensorflow import keras as K
 
-def read_config(config_file):
+
+def read_config_type(config_file):
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+    return config.get('config_type')
+
+
+
+def read_config_data(config_file):
     """
     Read input file path from a JSON configuration file.
 
@@ -14,15 +25,64 @@ def read_config(config_file):
     tuple: A tuple containing some information:
         - input_file (str): The path to the input npz file.
         - test_sample_size (float): size of the test sample in percentage
-        - num_epochs (int): number of epochs
-        - bach_size (int): mini-batch size
-        - output_name (str): additional info to be printed in the output file name
-        - L1 (float): regularizer parameter
-        - L2 (float): regularizer parameter
     """
     with open(config_file, 'r') as f:
         config = json.load(f)
-    return (config.get('input_file'), config.get('test_sample_size'), 
-            config.get('num_epochs'), config.get('batch_size'), 
-            config.get('output_name'), config.get('L1_regularizer'), 
-            config.get('L2_regularizer'))
+    return (config.get('input_file'), config.get('test_sample_size'))
+
+
+def load_model(config_file):
+    """
+    Read input file path from a JSON configuration file.
+
+    Parameters:
+    ------------
+        - config_file (str): The path to the JSON configuration file.
+
+    Returns:
+    ------------
+    loaded_model : tf.keras.Model
+        The loaded compiled Keras model.
+
+    Raises:
+    -------
+    FileNotFoundError:
+        If either the JSON or H5 file does not exist.
+    """
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+    input_arg = config.get('model_name')
+
+    # Construct file names
+    h5_file_name = input_arg + ".h5"
+    json_file_name = input_arg + ".json"
+
+    print("\nStart loading the model files:")
+    # Check if the .h5 file exists
+    if os.path.exists(h5_file_name):
+        # If the .h5 file exists, proceed to check for the .json file
+        if os.path.exists(json_file_name):
+            # If both files exist, proceed with processing
+            json_file = open(json_file_name, 'r')
+            loaded_model_json = json_file.read()
+            json_file.close()
+            loaded_model = model_from_json(loaded_model_json)
+            # load weights into new model
+            loaded_model.load_weights(h5_file_name)
+            print(f"JSON file '{json_file_name}'.json has been read")
+            print(f"H5 file '{h5_file_name}'.h5 has been read")
+            print("----> Model is loaded from disk.")
+            adam_optimizer = K.optimizers.Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-08, clipnorm=5)
+            rmsprop_optimizer = K.optimizers.RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, clipnorm=5)
+            adagrad_optimizer = K.optimizers.Adagrad(learning_rate=0.01, initial_accumulator_value=0.1, epsilon=1e-08, clipnorm=5)
+            loaded_model.compile(loss='bce', optimizer=adam_optimizer, metrics=["accuracy"])
+            print("----> Model is compiled.\n")
+            return loaded_model    
+        else:
+            print(f"Error: JSON file '{json_file_name}' does not exist.")
+            sys.exit(1)
+    else:
+        print(f"Error: H5 file '{h5_file_name}' does not exist.")
+        sys.exit(1)
+        
+    

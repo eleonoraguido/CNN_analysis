@@ -40,7 +40,9 @@ def create_CNN_model(l1 = 0.0001, l2 = 0.0001, num_stat = 3):
 
     CNN_mod = CNN_model.define_layers(kernel_regularizer, input_traces, input_distances, input_event, input_azimuths, input_Stot)
     
-    adam_optimizer = K.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, clipnorm=5)
+    adam_optimizer = K.optimizers.Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-08, clipnorm=5)
+    rmsprop_optimizer = K.optimizers.RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, clipnorm=5)
+    adagrad_optimizer = K.optimizers.Adagrad(learning_rate=0.01, initial_accumulator_value=0.1, epsilon=1e-08, clipnorm=5)
     CNN_mod.compile(loss='bce', optimizer=adam_optimizer, metrics=["accuracy"])
 
     return CNN_mod
@@ -90,22 +92,6 @@ def simple_CNN_training(epochs, batch_size, data_train, data_val, model):
     plt.savefig('loss_accuracy_plot.pdf')
 
     return model
-
-
-def evaluate_model(model, data_test):
-    """
-    Evaluate the performance of a trained CNN model using test data.
-
-    Parameters:
-    -----------
-    model : tf.keras.Model
-        Trained CNN model.
-    data_test : tuple
-        Tuple containing test data (traces, distances, event info, azimuth, Stot) and labels.
-    """
-    scores = model.evaluate([data_test.traces, data_test.dist, data_test.event, data_test.azimuth, data_test.Stot], data_test.label, verbose=1)
-    print("\nEvaluate the model on the test sample:")
-    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
 
 
 def save_CNN_model(model, epochs, batch_size, output_name, l1, l2):

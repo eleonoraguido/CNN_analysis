@@ -1,10 +1,13 @@
 This program reads a .npz file, previously created by merging together the data of interest 
 from two different particle species (generally photons and protons).
 
-A CNN model is defined and trained.
+Two different tasks can be performed depending on the configuration file type:
+-A CNN model is defined, trained and tested.
+-A CNN model is loaded and tested.
 
-Some arguments can be passed through the config file (example config.json):
-    -Path to the input file + input file name
+In order to define, create and test a model, use the config.json file
+Some arguments can be passed:
+    -Path to the input file + input file name (the simulations)
     -Fraction of the data set that won't be used for training (test data set fraction)
     -Number of epochs
     -Batch size
@@ -12,8 +15,14 @@ Some arguments can be passed through the config file (example config.json):
     -Regularizer parameter L1 (penalty applied to absolute value of weights, 0-0.1)
     -Regularizer parameter L2 (penalty applied to square of weights, 0-0.1)
 
+In order to load and test an existing model, use the config_load_model.json file
+Some arguments can be passed:
+    -Path to the input file + input file name (the simulations)
+    -Fraction of the data set that won't be used for training (test data set fraction)
+    -Name of the model without extension (two files should exist: .h5 and .json)
+
 
 How to run the program:
 source activate_env.sh
-python3 main.py config.json
+python3 main.py <config_file>
 
