@@ -43,8 +43,13 @@ def main():
     y_pred, y_true = apply_model.return_labels(trained_CNN, test_dataset)
     apply_model.plot_labels(y_true, y_pred)
     apply_model.plot_confusion_matrix(y_true, y_pred)
-    apply_model.plot_ROC(y_true, y_pred)
-    
+
+
+    percentage_signal = sum(test_dataset.label)/len(test_dataset.label)
+    if (percentage_signal > 0.01 and percentage_signal < 0.99):    #do not plot ROC curve if all the data set belong to one class
+        tpr, threshold = apply_model.plot_ROC(y_true, y_pred)
+        apply_model.plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold)
+        
 
 if __name__ == "__main__":
     main()

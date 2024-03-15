@@ -91,7 +91,7 @@ def classification_layer(x, kernel_regularizer):
     """
     #x = Dropout(0.2)(x)
     x = Dense(128, kernel_regularizer=kernel_regularizer)(x)
-    #x = Dropout(0.2)(x)
+    #x = Dropout(0.1)(x)
     x = Dense(64, kernel_regularizer=kernel_regularizer)(x)
     x = Dense(10, kernel_regularizer=kernel_regularizer)(x)
     #x = Dropout(0.2)(x)

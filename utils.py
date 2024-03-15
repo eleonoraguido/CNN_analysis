@@ -31,6 +31,37 @@ def read_config_data(config_file):
     return (config.get('input_file'), config.get('test_sample_size'))
 
 
+def read_config_settings(config_file):
+    """
+    Read input file path from a JSON configuration file.
+
+    Parameters:
+    ------------
+        - config_file (str): The path to the JSON configuration file.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing the following information:
+        - num_epochs : int
+            Number of epochs for training.
+        - batch_size : int
+            Batch size for training.
+        - output_name : str
+            Output name for saving trained model.
+        - L1_regularizer : float
+            L1 regularization parameter.
+        - L2_regularizer : float
+            L2 regularization parameter.
+    """
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+    return (config.get('num_epochs'), config.get('batch_size'), config.get('output_name'), 
+            config.get('L1_regularizer'), config.get('L2_regularizer'))
+
+
+
+
 def load_model(config_file):
     """
     Read input file path from a JSON configuration file.
