@@ -50,6 +50,8 @@ def main():
     
     fp_indices = apply_model.get_background_rejection(y_true, y_pred, thres_set)
     apply_model.print_events_info(fp_indices, test_dataset, "fp_events_thres"+"{:.{}f}".format(thres_set, 3)+".pdf")
+    apply_model.plot_fpr_vs_S1000(test_dataset, y_pred, y_true)
+
 
 if __name__ == "__main__":
     main()
