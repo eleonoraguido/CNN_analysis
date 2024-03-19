@@ -6,5 +6,6 @@
     "num_epochs": 100,
     "batch_size": 64,
     "L1_regularizer": 0.0001,
-    "L2_regularizer": 0.001
+    "L2_regularizer": 0.001,
+    "sel_threshold": 0.5
 }

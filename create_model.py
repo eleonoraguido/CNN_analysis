@@ -34,7 +34,7 @@ def create_CNN_model(l1 = 0.0001, l2 = 0.0001, num_stat = 3):
     # Choose the input shape
     input_traces = Input (shape =[num_stat, 150, 1])  # 3 comulative traces (for 3 SD stations), 150 time bins
     input_distances = Input (shape =[num_stat, 1]) # distances of each SD station from the shower core
-    input_event = Input (shape =[3]) # S1000, theta, Nstat of the event
+    input_event = Input (shape =[3]) # theta, S1000, Nstat of the event
     input_azimuths = Input (shape =[num_stat, 1]) # azimuth of each SD station wrt the SP
     input_Stot = Input (shape =[num_stat, 1]) # total signal in each station
 
@@ -120,3 +120,7 @@ def save_CNN_model(model, epochs, batch_size, output_name, l1, l2):
 
     print("The trained model has been saved as "+model_name+".json")
     print("Correpsoding weights are saved in the corresponding .h5 file")
+
+
+
+#def cross_validation_training(epochs, batch_size, n_fold, data_train, data_val, model):

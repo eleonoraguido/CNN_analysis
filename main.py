@@ -10,14 +10,14 @@ def main():
 
     config_type = utils.read_config_type(config_file)
 
-    input_file, split_size = utils.read_config_data(config_file)
+    input_file, split_size, thres_set = utils.read_config_data(config_file)
     data = prepare_dataset.load_file(input_file)    #load the data set
     datasets = prepare_dataset.split_data(data, split_size)     #split it into training, testing, validation
     train_dataset = datasets.train
     val_dataset = datasets.validation
     test_dataset = datasets.test
 
-    # Check if the input argument is a file
+    # Check the type of configuration file
     if config_type == "create_model":
         epochs, batch_size, output_name, l1, l2 = utils.read_config_settings(config_file)
 
@@ -32,7 +32,6 @@ def main():
         create_model.save_CNN_model(trained_CNN, epochs, batch_size, output_name, l1, l2)
         
     elif config_type == "load_model":
-        # If it's not a file, treat it as a string
         trained_CNN = utils.load_model(config_file)
     
     else:
@@ -44,12 +43,13 @@ def main():
     apply_model.plot_labels(y_true, y_pred)
     apply_model.plot_confusion_matrix(y_true, y_pred)
 
-
     percentage_signal = sum(test_dataset.label)/len(test_dataset.label)
     if (percentage_signal > 0.01 and percentage_signal < 0.99):    #do not plot ROC curve if all the data set belong to one class
         tpr, threshold = apply_model.plot_ROC(y_true, y_pred)
-        apply_model.plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold)
-        
+        thres_set = apply_model.plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold)
+    
+    fp_indices = apply_model.get_background_rejection(y_true, y_pred, thres_set)
+    apply_model.print_events_info(fp_indices, test_dataset, "fp_events_thres"+"{:.{}f}".format(thres_set, 3)+".pdf")
 
 if __name__ == "__main__":
     main()

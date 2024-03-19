@@ -114,9 +114,6 @@ def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) 
 
     test_set = DataSet(traces=x_test, dist=x_test_dist, event=x_test_event, azimuth=x_test_azimuth, Stot=x_test_Stot, label=y_test)
 
-    percentage_signal = sum(y_test)/len(y_test)*100
-
-
     val_size = len(x_test) / len(x_trainval)
     if(test_size > 0.5):
         val_set = DataSet(traces=[], dist=[], event=[], azimuth=[], Stot=[], label=[])

@@ -24,11 +24,15 @@ def read_config_data(config_file):
     ------------
     tuple: A tuple containing some information:
         - input_file (str): The path to the input npz file.
-        - test_sample_size (float): size of the test sample in percentage
+        - test_sample_size (float): size of the test sample in percentage.
+        - sel_threshold (float): chosen threshold for selection.
     """
     with open(config_file, 'r') as f:
         config = json.load(f)
-    return (config.get('input_file'), config.get('test_sample_size'))
+    return (config.get('input_file'), config.get('test_sample_size'), config.get('sel_threshold'))
+
+
+
 
 
 def read_config_settings(config_file):

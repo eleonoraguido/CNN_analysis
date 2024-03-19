@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import metrics
 import seaborn as sns
+import collections
 
 def evaluate_model(model, data_test):
     """
@@ -51,6 +52,7 @@ def return_labels(model, data_test):
     """
     y_pred = model.predict([data_test.traces, data_test.dist, data_test.event, data_test.azimuth, data_test.Stot])  
     y_true = np.array(data_test.label)
+    y_pred = np.squeeze(y_pred)
     return y_pred, y_true
 
 
@@ -76,8 +78,8 @@ def plot_labels(y_true, y_pred, filename="scoreCNN_test.pdf"):
     proton = np.array([x for x, y in zip(y_pred, y_true) if y == 0]) # Predicted labels for protons
     hist1, bin_edges = np.histogram(photon, bins=10)
     hist2, bin_edges = np.histogram(proton, bins=10)
-    ax.hist(proton, 40, [0, 1], color='orange', alpha=0.7, label='Background', ec="darkorange", zorder=2)
-    ax.hist(photon, 40, [0, 1], color='green', alpha=0.3, label='Photons', ec="darkgreen", zorder=2)
+    ax.hist(proton, 50, [0, 1], color='orange', alpha=0.7, label='Background', ec="darkorange", zorder=2)
+    ax.hist(photon, 50, [0, 1], color='green', alpha=0.3, label='Photons', ec="darkgreen", zorder=2)
     ax.vlines(0.5, 1.e0, 1.e5, color='darkblue')
     ax.set_ylabel('Number of events', fontsize='13')
     ax.set_xlabel('$y_{\mathrm{pred}}$', fontsize='13')
@@ -198,7 +200,8 @@ def plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold, prob =0.5, fi
 
     Returns:
     --------
-    None
+    thres: float
+        Threshold corresponding to 50% signal efficiency
     """
     # Find threshold for a given true positive rate
     thres = threshold[np.argmin(np.abs(tpr - prob))]
@@ -234,4 +237,151 @@ def plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold, prob =0.5, fi
     plt.tight_layout()
     plt.savefig(filename)
 
+    return thres
 
+
+def get_background_rejection (y_true, y_pred, threshold):
+    """
+    Compute background rejection rate based on true and predicted labels.
+
+    Parameters:
+        y_true (array-like): True labels.
+        y_pred (array-like): Predicted labels.
+        threshold (float): Threshold value for converting probabilities to binary predictions.
+
+    Returns:
+        misclassified_indices (numpy.ndarray): Index positions of misclassified background events.
+
+    """
+    # Calculate confusion matrix values at 50% signal efficiency
+    y_pred_sel = np.where(y_pred > threshold, 1, 0)
+    
+    # Calculate True Negatives (TN) and False Positives (FP)
+    tn_indices = np.where((y_true == 0) & (y_pred_sel == 0))[0]  # Index positions of true negatives
+    fp_indices = np.where((y_true == 0) & (y_pred_sel == 1))[0]  # Index positions of false positives
+    
+    # Calculate background rejection
+    tn = len(tn_indices)
+    fp = len(fp_indices)
+    background_rejection = 100 * tn / (tn + fp)
+    
+    # Print information
+    print("The decision threshold has been set to ", threshold)
+    print("The corresponding background rejection is ", f"{background_rejection:.2f}%")
+    print("Number of background events misclassified (False Positives):", fp, " out of ", tn+fp)
+
+    return fp_indices
+    
+
+
+def print_events_info(indices, test_data, output_file = 'selected_events.pdf'):
+    """
+    Print information for selected events based on their indices and loaded data.
+    Plot the values of S1000, theta and Nstat for such events, comapred with the whole distributions.
+
+    Parameters:
+    -----------
+    indices : numpy.ndarray
+        Array containing the indices of events.
+    test_data : DataSets
+        Object containing the test dataset.
+    output_file : str, optional
+        File path to save the output plot (default is 'selected_events.pdf').
+
+    Returns:
+    -----------
+    None
+    """
+    # Print table header
+    print("Selected events:")
+    print("{:<10}\t {:<10}\t {:<10}".format('S(1000)', 'Theta', 'Nstat'))
+    print("-" * 70)
+
+    # Lists to store values for histograms
+    s1000_all_values = []
+    theta_all_values = []
+    nstat_all_values = []
+
+    s1000_selected_values = []
+    theta_selected_values = []
+    nstat_selected_values = []
+    
+    # Iterate over misclassified indices
+    for idx in range(len(test_data.event)):
+        dist = test_data.dist[idx]
+        stot = test_data.Stot[idx]
+        azimuth = test_data.azimuth[idx]
+        info_event = test_data.event[idx]
+        label = test_data.label[idx]
+
+        # Extract values from the list and convert them to strings
+        s1000 = 10**info_event[1][0]
+        theta = info_event[0][0]
+        nstat = 10**info_event[2][0]
+        
+        # Append values to lists for histograms
+        s1000_all_values.append(s1000)
+        theta_all_values.append(theta)
+        nstat_all_values.append(nstat)
+
+        # Check if the index is in the given indices
+        if idx in indices:
+            s1000_selected_values.append(s1000)
+            theta_selected_values.append(theta)
+            nstat_selected_values.append(nstat)
+        
+            # Print information for each misclassified event
+            print("{:.2f}\t {:.2f}\t {:<10}".format(s1000, theta, nstat))
+
+    #--------------------------------------------------------------------
+    # Plot histograms
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    plt.rcParams.update({'text.usetex': True})
+
+    # Histogram 1
+    axes[0].hist(s1000_all_values, bins=30, color='blue', alpha=0.7)
+    axes[0].set_title('S(1000) Distribution')
+    axes[0].set_xlabel('S(1000)')
+    axes[0].set_ylabel('Frequency')
+    # Add vertical lines for selected values
+    value_counts = collections.Counter(s1000_selected_values)
+    for value, count in value_counts.items():
+        axes[0].axvline(x=value, color='darkblue', linestyle='--')
+        if count > 1:
+            axes[0].text(value, axes[0].get_ylim()[1]*0.95, f'{count}', color='darkblue', ha='left', rotation=0)
+
+
+    # Histogram 2 
+    axes[1].hist(theta_all_values, bins=30, color='green', alpha=0.7)
+    axes[1].set_title(r'$ \theta $ Distribution')
+    axes[1].set_xlabel(r'$ \theta $')
+    axes[1].set_ylabel('Frequency')
+
+    # Add vertical lines for selected values
+    value_counts = collections.Counter(theta_selected_values)
+    for value, count in value_counts.items():
+        axes[1].axvline(x=value, color='darkgreen', linestyle='--')
+        if count > 1:
+            axes[1].text(value, axes[1].get_ylim()[1]*0.95, f'{count}', color='darkblue', ha='left', rotation=0)
+
+
+    # Histogram 3
+    # Calculate the bin edges
+    bin_edges = np.arange(1, 21, 1)
+
+    # Plot histogram with custom bins
+    _, bins, _ = axes[2].hist(nstat_all_values, bins=bin_edges, color='red', alpha=0.7)
+    axes[2].set_title('$N_{stat}$ Distribution')
+    axes[2].set_xlabel('$N_{stat}$')
+    axes[2].set_ylabel('Frequency')
+    axes[2].set_xticks(np.arange(min(bins), max(bins)+1, 1))
+
+    # Add vertical lines for selected values
+    value_counts = collections.Counter(nstat_selected_values)
+    for value, count in value_counts.items():
+        axes[2].axvline(x=value, color='darkred', linestyle='--')
+        if count > 1:
+            axes[2].text(value+0.1, axes[2].get_ylim()[1]*0.95, f'{count}', color='black', ha='left', rotation=0)
+
+    plt.tight_layout()
+    plt.savefig(output_file)
