@@ -3,6 +3,7 @@ import numpy as np
 from sklearn import metrics
 import seaborn as sns
 import collections
+import utils
 
 def evaluate_model(model, data_test):
     """
@@ -406,16 +407,8 @@ def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1
     # Iterate over events
     s1000 = np.array([test_data.event[idx][1][0] for idx in range(len(test_data.event))])
 
-    def compute_bin_edges(x, num_bins):
-        sorted_indices = np.argsort(x)
-        sorted_x = x[sorted_indices]
-        bin_size = len(sorted_x) // num_bins
-        bin_edges = [sorted_x[i * bin_size] for i in range(num_bins)]
-        bin_edges.append(sorted_x[-1] + 1)  # Add 1 to the last bin edge to include the rightmost endpoint
-        return bin_edges
-
-    # Compute the bin edges
-    x_edges_equal = compute_bin_edges(s1000, num_bins)
+    # Compute the bin edges with an external function (same number of events in each bin)
+    x_edges_equal = utils.compute_bin_edges(s1000, num_bins)
 
     min_S1000 = s1000.min()
     max_S1000 = s1000.max()
@@ -453,8 +446,6 @@ def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1
     ax.set_xlabel('$\mathrm{log_{10}(S1000/VEM)}$', fontsize='13')
 
     rects = ax.patches
-    labels = bkg_arr 
-    #ax.text(0.7, 0.85, 'Number of background nuclei', horizontalalignment='center',verticalalignment='center', transform=ax.transAxes,zorder=5, bbox=props) 
     for rect, bin_value in zip(rects, bkg_arr):
         height = rect.get_height()
         ax.text(rect.get_x() + rect.get_width() / 2, height, f"{bin_value:.0f}\n{height*100:.4f}\%", ha='center', va='bottom')
@@ -469,3 +460,72 @@ def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1
     ax2.set_xlabel('$S1000 (VEM)$', fontsize='13')
 
     fig.savefig(pdf_name)
+
+
+def plot_tpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="tpr_vs_S1000_binning_equal.pdf"):
+    """
+    Plot the True Positive Rate (TPR) versus S1000/VEM with equal binning.
+
+    Parameters:
+        test_data (array-like): Array containing the test data.
+        y_pred (array-like): Predicted labels.
+        y_test (array-like): True labels.
+        num_bins (int, optional): Number of bins for binning S1000/VEM. Default is 5.
+        pdf_name (str, optional): Name of the PDF file to save the plot. Default is "tpr_vs_S1000_binning_equal.pdf".
+
+    Returns:
+        None
+    """
+    plt.rcParams.update({'text.usetex': True})
+    # Iterate over events
+    s1000 = np.array([test_data.event[idx][1][0] for idx in range(len(test_data.event))])
+
+    # Compute the bin edges
+    x_edges_equal = utils.compute_bin_edges(s1000, num_bins)
+
+    min_S1000 = s1000.min()
+    max_S1000 = s1000.max()
+    width = (max_S1000 - min_S1000) / num_bins
+
+    # Compute the bin edges
+    x_edges = np.arange(start=min_S1000, stop=max_S1000 + 0.05, step=width)
+
+    tpr_arr = np.empty(x_edges.size - 1) 
+    signal_count_arr = np.empty(x_edges.size - 1) 
+
+    for i, x in enumerate(x_edges_equal[:-1]):
+        lab_true = np.array([lab for Sref, lab in zip(s1000, y_test) if Sref > x and Sref < x_edges_equal[i + 1]])
+        lab_pred = np.array([lab for Sref, lab in zip(s1000, y_pred) if Sref > x and Sref < x_edges_equal[i + 1]])
+        tp = np.logical_and(lab_pred >= 0.5, lab_true == True)
+        tpr = tp.sum() / np.count_nonzero(lab_true)
+        tpr_arr[i] = tpr
+        signal_count_arr[i] = np.count_nonzero(lab_true)
+        
+    x_axis = np.round(x_edges, 2)
+    x_axis_equal = np.round(x_edges_equal, 2)
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+
+    fig, ax = plt.subplots()
+    ax.set_xticks(x_axis)
+    ax.set_xticklabels(x_axis_equal)
+    ax.grid(zorder=3)
+    ax.hist(x_axis[:-1], x_axis, weights=tpr_arr, rwidth=0.95, color="lightblue", ec="blue", zorder=4)
+    ax.set_ylabel('TPR', fontsize='13')
+    ax.set_xlabel('$\mathrm{log_{10}(S1000/VEM)}$', fontsize='13')
+
+    rects = ax.patches
+    for rect, bin_value in zip(rects, signal_count_arr):
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width() / 2, height, f"{bin_value:.0f}\n{height*100:.4f}\%", ha='center', va='bottom')
+    ax.tick_params(axis='y', which='minor')
+    ax.set_ylim(bottom=0, top=ax.get_ylim()[1] * 1.1)
+
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    s1000_values = 10 ** x_axis_equal
+    ax2.set_xticks(ax.get_xticks())
+    ax2.set_xticklabels([f"{val:.1f}" for val in s1000_values])
+    ax2.set_xlabel('$S1000 (VEM)$', fontsize='13')
+
+    fig.savefig(pdf_name)
+

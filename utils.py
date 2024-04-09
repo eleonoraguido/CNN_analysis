@@ -26,10 +26,11 @@ def read_config_data(config_file):
         - input_file (str): The path to the input npz file.
         - test_sample_size (float): size of the test sample in percentage.
         - sel_threshold (float): chosen threshold for selection.
+        - k_cross_validation (int): number of folds used for cross validation procedure (no cross validation if 0)
     """
     with open(config_file, 'r') as f:
         config = json.load(f)
-    return (config.get('input_file'), config.get('test_sample_size'), config.get('sel_threshold'))
+    return (config.get('input_file'), config.get('test_sample_size'), config.get('sel_threshold'), config.get('k_cross_validation'))
 
 
 
@@ -121,3 +122,26 @@ def load_model(config_file):
         sys.exit(1)
         
     
+
+def compute_bin_edges(x, num_bins):
+    """
+    Compute the edges of bins for equal binning (same number of events in each bin).
+
+    Parameters:
+    -------------
+        x (array-like): Input data array.
+        num_bins (int): Number of bins.
+
+    Returns:
+    -------------
+        list: List containing the edges of the bins.
+    """
+    sorted_indices = np.argsort(x)
+    sorted_x = x[sorted_indices]
+    bin_size = len(sorted_x) // num_bins
+    bin_edges = [sorted_x[i * bin_size] for i in range(num_bins)]
+    
+    # Add a small fraction of the maximum value to the last bin edge
+    max_value = sorted_x[-1]
+    bin_edges.append(max_value + max_value * 0.01)  # Adjust the fraction as needed
+    return bin_edges    

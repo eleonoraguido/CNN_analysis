@@ -1,7 +1,8 @@
 
 import numpy as np
-from typing import Tuple
+from typing import List, Dict, Any, Tuple
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
 from typing import NamedTuple, Tuple
 from collections import namedtuple
 from collections import Counter
@@ -149,3 +150,75 @@ def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) 
 
 
     return DataSets(train=train_set, validation=val_set, test=test_set)
+
+
+
+
+def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> List[Dict[str, DataSet]]:
+    """
+    Prepare the data for k-fold cross-validation.
+
+    Parameters:
+    -----------
+    input_dict : dict
+        Dictionary containing the loaded arrays.
+    k_fold : int
+        Number of folds for cross-validation.
+    seed : int, optional
+        Random seed used for shuffling the data.
+
+    Returns:
+    -----------
+    List[Dict[str, DataSet]]
+        List of datasets, each representing one fold of the cross-validation. 
+        Each dataset contains training, validation, and test sets.
+
+    Notes:
+    -----------
+    The returned datasets list contains dictionaries, each representing one fold of the cross-validation.
+    Each dictionary has keys 'train', 'validation', and 'test', with corresponding DataSet objects.
+    Each DataSet object consists of arrays for traces, distances, event information, azimuth, Stot, and labels.
+    """
+
+    input1 = input_dict['traces']
+    input2 = input_dict['dist']
+    input3 = input_dict['info_event']
+    input4 = input_dict['azimuthSP']
+    input5 = input_dict['Stot']
+    labels = input_dict['labels']
+
+    np.random.seed(seed) 
+    kfold = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=seed)
+    
+    datasets = []  # Array to store datasets for each fold
+
+    for i, (train_idx, test_idx) in enumerate(kfold.split(input1, labels)):
+        print(f"Fold: {i}")
+
+        # Split data into train and test sets
+        x_train, x_test = input1[train_idx], input1[test_idx]
+        x_train_dist, x_test_dist = input2[train_idx], input2[test_idx]
+        x_train_event, x_test_event = input3[train_idx], input3[test_idx]
+        x_train_azimuth, x_test_azimuth = input4[train_idx], input4[test_idx]
+        x_train_Stot, x_test_Stot = input5[train_idx], input5[test_idx]
+        y_train, y_test = labels[train_idx], labels[test_idx]
+
+        # Further splitting train into train and validation sets
+        x_train, x_val, x_train_dist, x_val_dist, x_train_event, x_val_event, x_train_azimuth, x_val_azimuth, x_train_Stot, x_val_Stot, y_train, y_val = train_test_split(
+            x_train, x_train_dist, x_train_event, x_train_azimuth, x_train_Stot, y_train,
+            test_size=len(x_test) / len(x_train), shuffle=True, random_state=seed)
+
+        # Create DataSet objects
+        train_set = DataSet(traces=x_train, dist=x_train_dist, event=x_train_event, azimuth=x_train_azimuth, Stot=x_train_Stot, label=y_train)
+        val_set = DataSet(traces=x_val, dist=x_val_dist, event=x_val_event, azimuth=x_val_azimuth, Stot=x_val_Stot, label=y_val)
+        test_set = DataSet(traces=x_test, dist=x_test_dist, event=x_test_event, azimuth=x_test_azimuth, Stot=x_test_Stot, label=y_test)
+
+         # Print information about the datasets
+        print(f"Number of events in train set: {len(train_set.label)}, Percentage: {len(train_set.label)/len(labels) * 100:.2f}%")
+        print(f"Number of events in validation set: {len(val_set.label)}, Percentage: {len(val_set.label)/len(labels) * 100:.2f}%")
+        print(f"Number of events in test set: {len(test_set.label)}, Percentage: {len(test_set.label)/len(labels) * 100:.2f}%")
+
+
+        datasets.append({'train': train_set, 'validation': val_set, 'test': test_set})
+
+    return datasets
