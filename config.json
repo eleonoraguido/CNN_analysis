@@ -2,10 +2,10 @@
     "config_type": "create_model",
     "input_file": "/data/auger8/DNN_photon_analysis_input_files/dataset/data_phot_prot_merged_shuffle_maxtheta60_lgE185_195.npz",
     "output_name": "phot_prot_maxtheta60_energy_185_195",
-    "k_cross_validation": 5,
-    "test_sample_size": 0.1,
+    "partitioning_method": "k_fold",
+    "partitioning_param": 3,
     "num_epochs": 5,
-    "batch_size": 64,
+    "batch_size": 256,
     "L1_regularizer": 0.0001,
     "L2_regularizer": 0.001,
     "sel_threshold": 0.5

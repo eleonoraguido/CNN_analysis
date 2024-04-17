@@ -193,7 +193,7 @@ def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> 
     datasets = []  # Array to store datasets for each fold
 
     for i, (train_idx, test_idx) in enumerate(kfold.split(input1, labels)):
-        print(f"Fold: {i}")
+        print(f"\nFold: {i+1}")
 
         # Split data into train and test sets
         x_train, x_test = input1[train_idx], input1[test_idx]

@@ -1,9 +1,11 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import metrics
 import seaborn as sns
 import collections
 import utils
+from config import PDF_SAVE_PATH
 
 def evaluate_model(model, data_test):
     """
@@ -57,7 +59,7 @@ def return_labels(model, data_test):
     return y_pred, y_true
 
 
-def plot_labels(y_true, y_pred, filename="scoreCNN_test.pdf"):
+def plot_labels(y_true, y_pred, filename="scoreCNN_test.pdf", save_path=PDF_SAVE_PATH):
     """
     Plot the predicted labels distribution of a trained CNN model.
 
@@ -69,11 +71,16 @@ def plot_labels(y_true, y_pred, filename="scoreCNN_test.pdf"):
         Predicted labels for the test data.
     filename : str, optional
         Filename to save the plot. Default is 'scoreCNN_test.pdf'.
-
+    save_path : str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
     Example:
     --------
     plot_labels(trained_model, true_labels, predicted_labels)
     """
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, filename)
+
     fig, ax = plt.subplots()
     photon = np.array([x for x, y in zip(y_pred, y_true) if y == 1]) # Predicted labels for photons
     proton = np.array([x for x, y in zip(y_pred, y_true) if y == 0]) # Predicted labels for protons
@@ -91,13 +98,13 @@ def plot_labels(y_true, y_pred, filename="scoreCNN_test.pdf"):
     legend = ax.legend(prop={'size': 13}, edgecolor="black")
     legend.get_frame().set_alpha(0.2)
     ax.grid(zorder=1)
-    fig.savefig(filename, transparent=True)
+    fig.savefig(full_path, transparent=True)
     plt.close(fig)  # Close the figure to release memory
 
 
 
 
-def plot_confusion_matrix(y_true, y_pred, filename="confusion_matrices.pdf"):
+def plot_confusion_matrix(y_true, y_pred, filename="confusion_matrices.pdf", save_path=PDF_SAVE_PATH):
     """
     Plot the confusion matrices side by side on the same plot.
 
@@ -109,7 +116,14 @@ def plot_confusion_matrix(y_true, y_pred, filename="confusion_matrices.pdf"):
         Predicted labels for the test data.
     filename : str, optional
         Filename to save the plot. Default is 'confusion_matrices.pdf'.
+    save_path : str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
     """
+
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, filename)
+
     fig, axs = plt.subplots(1, 2, figsize=(14, 6))
 
     confusion_matrix = metrics.confusion_matrix(y_true, np.rint(y_pred))
@@ -129,12 +143,12 @@ def plot_confusion_matrix(y_true, y_pred, filename="confusion_matrices.pdf"):
     # Adjust layout and spacing
     plt.subplots_adjust(wspace=0.5)
 
-    plt.savefig(filename, transparent=True)
+    plt.savefig(full_path, transparent=True)
     plt.close(fig)  # Close the figure to release memory
 
 
 
-def plot_ROC(y_true, y_pred, filename="roc_curve.pdf"):
+def plot_ROC(y_true, y_pred, filename="roc_curve.pdf", save_path=PDF_SAVE_PATH):
     """
     Plot the ROC curve.
 
@@ -146,7 +160,13 @@ def plot_ROC(y_true, y_pred, filename="roc_curve.pdf"):
         Predicted labels for the test data.
     filename : str, optional
         Filename to save the plot. Default is 'roc_curve.pdf'.
+    save_path : str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
     """
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, filename)
+
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
     # ROC Curve
@@ -174,13 +194,13 @@ def plot_ROC(y_true, y_pred, filename="roc_curve.pdf"):
     ax2.set_xlabel('Sensitivity', fontsize=12)
 
     # Save the figure
-    fig.savefig(filename, transparent=True)
+    fig.savefig(full_path, transparent=True)
     plt.close(fig)  # Close the figure to release memory.
 
     return tpr, threshold
 
 
-def plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold, prob =0.5, filename="confusion_matrix_50sigeff.pdf"):
+def plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold, prob =0.5, filename="confusion_matrix_50sigeff.pdf", save_path=PDF_SAVE_PATH):
     """
     Plot confusion matrix with annotated values at 50% signal efficiency.
 
@@ -198,12 +218,18 @@ def plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold, prob =0.5, fi
         True Positive Rate value for which the threshold is calculated. Default is 0.5.
     filename : str, optional
         Filename to save the plot. Default is "confusion_matrix_50sigeff.pdf".
+    save_path : str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
 
     Returns:
     --------
     thres: float
         Threshold corresponding to 50% signal efficiency
     """
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, filename)
+
     # Find threshold for a given true positive rate
     thres = threshold[np.argmin(np.abs(tpr - prob))]
     
@@ -236,7 +262,7 @@ def plot_confusion_matrix_50sigeff(y_true, y_pred, tpr, threshold, prob =0.5, fi
     plt.title('Confusion Matrix', fontsize=15)
     
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(full_path)
 
     return thres
 
@@ -275,7 +301,7 @@ def get_background_rejection (y_true, y_pred, threshold):
     
 
 
-def print_events_info(indices, test_data, output_file = 'selected_events.pdf'):
+def print_events_info(indices, test_data, output_file = 'selected_events.pdf', save_path=PDF_SAVE_PATH):
     """
     Print information for selected events based on their indices and loaded data.
     Plot the values of S1000, theta and Nstat for such events, comapred with the whole distributions.
@@ -288,11 +314,17 @@ def print_events_info(indices, test_data, output_file = 'selected_events.pdf'):
         Object containing the test dataset.
     output_file : str, optional
         File path to save the output plot (default is 'selected_events.pdf').
+    save_path : str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
 
     Returns:
     -----------
     None
     """
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, output_file)
+
     # Print table header
     print("Selected events:")
     print("{:<10}\t {:<10}\t {:<10}".format('S(1000)', 'Theta', 'Nstat'))
@@ -385,12 +417,12 @@ def print_events_info(indices, test_data, output_file = 'selected_events.pdf'):
             axes[2].text(value+0.1, axes[2].get_ylim()[1]*0.95, f'{count}', color='black', ha='left', rotation=0)
 
     plt.tight_layout()
-    plt.savefig(output_file)
+    plt.savefig(full_path)
 
 
 
 
-def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1000_binning_equal.pdf"):
+def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1000_binning_equal.pdf", save_path=PDF_SAVE_PATH):
     """
     Plot the false positive rate (FPR) versus S1000/VEM with equal binning.
 
@@ -400,10 +432,15 @@ def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1
         y_test (array-like): True labels.
         num_bins (int, optional): Number of bins for binning S1000/VEM. Default is 5.
         pdf_name (str, optional): Name of the PDF file to save the plot. Default is "fpr_vs_S1000_binning_equal.pdf".
+        save_path (str, optional): Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
 
     Returns:
         None
     """
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, pdf_name)
+
     # Iterate over events
     s1000 = np.array([test_data.event[idx][1][0] for idx in range(len(test_data.event))])
 
@@ -459,10 +496,10 @@ def plot_fpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="fpr_vs_S1
     ax2.set_xticklabels([f"{val:.1f}" for val in s1000_values])
     ax2.set_xlabel('$S1000 (VEM)$', fontsize='13')
 
-    fig.savefig(pdf_name)
+    fig.savefig(full_path)
 
 
-def plot_tpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="tpr_vs_S1000_binning_equal.pdf"):
+def plot_tpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="tpr_vs_S1000_binning_equal.pdf", save_path=PDF_SAVE_PATH):
     """
     Plot the True Positive Rate (TPR) versus S1000/VEM with equal binning.
 
@@ -472,10 +509,15 @@ def plot_tpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="tpr_vs_S1
         y_test (array-like): True labels.
         num_bins (int, optional): Number of bins for binning S1000/VEM. Default is 5.
         pdf_name (str, optional): Name of the PDF file to save the plot. Default is "tpr_vs_S1000_binning_equal.pdf".
-
+        save_path (str, optional): Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
+        
     Returns:
         None
     """
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, pdf_name)
+
     plt.rcParams.update({'text.usetex': True})
     # Iterate over events
     s1000 = np.array([test_data.event[idx][1][0] for idx in range(len(test_data.event))])
@@ -527,5 +569,5 @@ def plot_tpr_vs_S1000(test_data, y_pred, y_test, num_bins=5, pdf_name="tpr_vs_S1
     ax2.set_xticklabels([f"{val:.1f}" for val in s1000_values])
     ax2.set_xlabel('$S1000 (VEM)$', fontsize='13')
 
-    fig.savefig(pdf_name)
+    fig.savefig(full_path)
 

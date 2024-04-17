@@ -1,4 +1,4 @@
-import sys, os
+import sys
 import utils, prepare_dataset, create_model, apply_model
 
 def main():
@@ -10,15 +10,29 @@ def main():
 
     config_type = utils.read_config_type(config_file)
 
-    input_file, split_size, thres_set, k_fold = utils.read_config_data(config_file)
+    input_file, part_method, part_param, thres_set = utils.read_config_data(config_file)
 
     data = prepare_dataset.load_file(input_file)    #load the data set
     print("\nInput file is "+input_file)
 
     models = {}  #dictionary to store the models if k_fold is not 0
+    metrics_list = {}
 
-    if(k_fold == 0):
-        print("No cross validation is performed, only one model is trained.") 
+    if(part_method == "split"):
+        print("\nNo cross validation is performed, only one model is trained.") 
+
+        if isinstance(part_param, int):
+            print("Error: For 'split' case, partitioning_param should be a float between 0 and 1.")
+            sys.exit(1)
+        
+        try:
+            split_size = float(part_param)
+            if not 0 < split_size < 1:
+                raise ValueError("Split size should be between 0 and 1.")
+        except ValueError as e:
+            print("Error:", e)
+            sys.exit(1)
+        
         print("Test data set is "+str(split_size*100)+"% of the total data set." )
 
         datasets = prepare_dataset.split_data(data, split_size)     #split it into training, testing, validation
@@ -36,7 +50,11 @@ def main():
             print("Regularization parameter L2: "+str(l2)+"\n\n")
 
             CNN = create_model.create_CNN_model(l1, l2)
-            trained_CNN = create_model.simple_CNN_training(epochs, batch_size, train_dataset, val_dataset, CNN)
+            trained_CNN, metrics = create_model.simple_CNN_training(epochs, batch_size, train_dataset, val_dataset, CNN)
+            model_key = "model"
+            metrics_list[model_key] = metrics   #create a dictionary with just one key
+            create_model.plot_loss_and_accuracy(metrics_list)
+
             create_model.save_CNN_model(trained_CNN, epochs, batch_size, output_name, l1, l2)
             
         elif config_type == "load_model":
@@ -44,13 +62,22 @@ def main():
         else:
             print("\nUnknown config_type specified in the config file. Exiting.")
             sys.exit(1)
-    else:
-        print("k-fold cross validation is performed with k = "+str(k_fold)+".")
+
+    elif(part_method == "k_fold"):
+        print("\nk-fold cross validation is performed")
+        try:
+            k_fold = int(part_param)
+            if k_fold <= 1:
+                raise ValueError("Number of folds should be greater than 1.")
+        except ValueError as e:
+            print("Error:", e)
+            sys.exit(1)
+        print("The number of folds is k = "+str(k_fold)+".")
         datasets = prepare_dataset.split_data_kfold(data, k_fold)
 
         # look into the datasets list, each representing one fold.
         for fold, dataset in enumerate(datasets):
-            print(f"Fold {fold + 1}:")
+            print(f"\nFold {fold + 1}:")
             train_dataset = dataset['train']
             val_dataset = dataset['validation']
             test_dataset = dataset['test']
@@ -65,10 +92,10 @@ def main():
                 print("Regularization parameter L2: " + str(l2) + "\n\n")
 
                 CNN = create_model.create_CNN_model(l1, l2)
-                trained_CNN = create_model.simple_CNN_training(epochs, batch_size, train_dataset, val_dataset, CNN)
-                model_key = f"{output_name}_fold{fold}"
+                trained_CNN, metrics = create_model.simple_CNN_training(epochs, batch_size, train_dataset, val_dataset, CNN)
+                model_key = f"{fold+1}"
                 models[model_key] = trained_CNN  # Store the trained model in the dictionary
-
+                metrics_list[model_key] = metrics
                 create_model.save_CNN_model(trained_CNN, epochs, batch_size, output_name + f"_fold{fold}", l1, l2)
 
             elif config_type == "load_model":
@@ -77,12 +104,18 @@ def main():
                 print("\nUnknown config_type specified in the config file. Exiting.")
                 sys.exit(1)
 
+        create_model.plot_loss_and_accuracy(metrics_list)
         sys.exit(1)  #protection, because what follows it has not been adapted yet to the k-fold cross validation analysis
+    else:
+        print("Error: Unknown partitioning method:", part_method, " -> choose between \"split\" and \"k_fold\"")
+        sys.exit(1)
     
     scores = apply_model.evaluate_model(trained_CNN, test_dataset)
     y_pred, y_true = apply_model.return_labels(trained_CNN, test_dataset)
     apply_model.plot_labels(y_true, y_pred)
     apply_model.plot_confusion_matrix(y_true, y_pred)
+
+    
 
     percentage_signal = sum(test_dataset.label)/len(test_dataset.label)
     if (percentage_signal > 0.01 and percentage_signal < 0.99):    #do not plot ROC curve if all the data set belong to one class

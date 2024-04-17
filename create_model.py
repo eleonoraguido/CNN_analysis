@@ -1,10 +1,12 @@
+import os
 import matplotlib.pyplot as plt
+import numpy as np
 from tensorflow import keras as K
 from tensorflow.keras import regularizers
 from tensorflow.keras import callbacks
 from tensorflow.keras.layers import *
 import CNN_model
-
+from config import PDF_SAVE_PATH
 
 
 def create_CNN_model(l1 = 0.0001, l2 = 0.0001, num_stat = 3):
@@ -48,6 +50,7 @@ def create_CNN_model(l1 = 0.0001, l2 = 0.0001, num_stat = 3):
     return CNN_mod
 
 
+
 def simple_CNN_training(epochs, batch_size, data_train, data_val, model):
     """
     Train a given CNN model using the provided training data.
@@ -67,34 +70,105 @@ def simple_CNN_training(epochs, batch_size, data_train, data_val, model):
 
     Returns:
     --------
-    tf.keras.Model
+    model : tf.keras.Model
         Trained CNN model.
+    metrics_list : dict
+        Dictionary containing metrics for the trained model.
+        Keys are model names and values are tuples of the form
+        (train_loss, val_loss, train_accuracy, val_accuracy).
     """
     metrics = model.fit([data_train.traces, data_train.dist, data_train.event, data_train.azimuth, data_train.Stot], data_train.label, epochs=epochs, batch_size=batch_size, verbose=1,  
                     validation_data=([data_val.traces, data_val.dist, data_val.event, data_val.azimuth, data_val.Stot], data_val.label) )
     
-    plt.figure(1, (12, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(metrics.history['loss'], "k")
-    plt.plot(metrics.history['val_loss'], "k--")
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper right')
+    train_loss = metrics.history['loss']
+    val_loss = metrics.history['val_loss']
+    train_accuracy = metrics.history['accuracy']
+    val_accuracy = metrics.history['val_accuracy']
 
-    plt.subplot(1, 2, 2)
-    plt.plot(metrics.history['accuracy'], "k")
-    plt.plot(metrics.history['val_accuracy'], "k--")
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
+    metrics_list = {
+        'train_loss': train_loss,
+        'val_loss': val_loss,
+        'train_accuracy': train_accuracy,
+        'val_accuracy': val_accuracy
+    }
 
-    # Save the plots
-    plt.savefig('loss_accuracy_plot.pdf')
-
-    return model
+    return model, metrics_list
 
 
-def save_CNN_model(model, epochs, batch_size, output_name, l1, l2):
+
+def plot_loss_and_accuracy(models_metrics, output_file = "loss_accuracy_plot.pdf", save_path=PDF_SAVE_PATH):
+    """
+    Plot the training and validation loss, as well as accuracy for multiple models and save it to a PDF file.
+
+    Parameters:
+    -----------
+    models_metrics : dict
+        Dictionary containing metrics for each model. Keys are model names and values are tuples of the form
+        (train_loss, val_loss, train_accuracy, val_accuracy).
+    output_file : str, optional
+        Path to the output PDF file. Default is "loss_accuracy_plot.pdf".
+    save_path : str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
+    """
+
+    # Generate PDF and save it to the specified path
+    full_path = os.path.join(save_path, output_file)
+
+    fig, axs = plt.subplots(1, 2)
+    fig.set_size_inches(12, 4)
+    
+    axs[0].grid(True)
+    axs[1].grid(True)
+
+    axs[0].set_ylim(0.05, 0.5)
+    axs[1].set_ylim(0.86, 0.99)
+    axs[0].set_ylabel('loss', fontsize=13)
+    axs[0].set_xlabel('epoch', fontsize=13)
+    axs[1].set_ylabel('accuracy', fontsize=13)
+    axs[1].set_xlabel('epoch', fontsize=13)
+
+    if len(models_metrics) == 1:  # Check if there is only one model
+        model_name, metrics = next(iter(models_metrics.items()))
+        
+        train_loss = metrics['train_loss']
+        val_loss = metrics['val_loss']
+        train_accuracy = metrics['train_accuracy']
+        val_accuracy = metrics['val_accuracy']
+
+        color = 'black'
+        axs[0].plot(train_loss, alpha=0.8, color=color, label = 'training')
+        axs[1].plot(train_accuracy, alpha=0.8, color=color, label = 'training')
+        axs[0].plot(val_loss, linestyle='dotted', alpha=0.8, color=color, label = 'validation')
+        axs[1].plot(val_accuracy, linestyle='dotted', alpha=0.8, color=color, label = 'validation')
+
+    else:   # There are more than one model in the dictionary
+        color_map = plt.cm.viridis  # Use Viridis colormap for multiple models
+        colors = color_map(np.linspace(0, 1, len(models_metrics)))  # Generate colors for multiple models
+        for i, (model_name, metrics) in enumerate(models_metrics.items()):
+            train_loss = metrics['train_loss']
+            val_loss = metrics['val_loss']
+            train_accuracy = metrics['train_accuracy']
+            val_accuracy = metrics['val_accuracy']
+            print(train_loss)
+            print(val_accuracy)
+            color = colors[i]  # Use different color for each model
+            axs[0].plot(train_loss, alpha=0.8, color=color, label=f'Training, model {model_name}')
+            axs[1].plot(train_accuracy, alpha=0.8, color=color, label=f'Training, model {model_name}')
+            axs[0].plot(val_loss, linestyle='dotted', alpha=0.8, color=color, label=f'Validation, model {model_name}')
+            axs[1].plot(val_accuracy, linestyle='dotted', alpha=0.8, color=color, label=f'Validation, model {model_name}')
+
+    axs[0].legend(loc='upper right')
+    axs[1].legend(loc='upper left')
+
+    plt.tight_layout()
+    plt.savefig(full_path)
+    plt.close()
+
+
+
+
+def save_CNN_model(model, epochs, batch_size, output_name, l1, l2, save_path=PDF_SAVE_PATH):
     """
     Save a trained CNN model and its weights.
 
@@ -108,18 +182,23 @@ def save_CNN_model(model, epochs, batch_size, output_name, l1, l2):
         Batch size used during training.
     output_name : str
         Name used to identify the saved model files.
+    save_path: str, optional
+        Path to the directory where the plot will be saved. If not provided,
+        the global variable PDF_SAVE_PATH will be used.
+
     """
     # serialize model to JSON
     model_json = model.to_json()
     model_name = f"CNN_model_{l1}L1_{l2}L2_{output_name}_E{epochs}_B{batch_size}"
-    with open(model_name+".json", "w") as json_file:
+    with open(save_path+model_name+".json", "w") as json_file:
         json_file.write(model_json)
 
     # serialize weights to HDF5
-    model.save_weights(model_name+".h5")
+    model.save_weights(save_path+model_name+".h5")
 
+    print("The model will be saved in the directory "+save_path)
     print("The trained model has been saved as "+model_name+".json")
-    print("Correpsoding weights are saved in the corresponding .h5 file")
+    print("The weights have been saved in the corresponding .h5 file")
 
 
 

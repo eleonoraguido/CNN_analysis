@@ -24,14 +24,19 @@ def read_config_data(config_file):
     ------------
     tuple: A tuple containing some information:
         - input_file (str): The path to the input npz file.
-        - test_sample_size (float): size of the test sample in percentage.
-        - sel_threshold (float): chosen threshold for selection.
-        - k_cross_validation (int): number of folds used for cross validation procedure (no cross validation if 0)
+        - partitioning_method (str): Method used to partition the dataset ("k_fold" or "split").
+        - partitioning_param (float): Parameter associated with the partitioning method (number of folds or size of test data set).
+        - sel_threshold (float): Chosen threshold for selection.
     """
     with open(config_file, 'r') as f:
         config = json.load(f)
-    return (config.get('input_file'), config.get('test_sample_size'), config.get('sel_threshold'), config.get('k_cross_validation'))
+    
+    input_file = config.get('input_file')
+    partitioning_method = config.get('partitioning_method')
+    partitioning_param = config.get('partitioning_param')
+    sel_threshold = config.get('sel_threshold')
 
+    return input_file, partitioning_method, partitioning_param, sel_threshold
 
 
 

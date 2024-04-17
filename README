@@ -9,8 +9,11 @@ In order to define, create and test a model, use the config.json file
 Some arguments can be passed:
     -Path to the input file + input file name (the simulations)
     -Additional information to be printed in the output file name
-    -Cross validation option: if true the k-fold cross validation is performed with k = 1/test_sample_size 
-    -Fraction of the data set that won't be used for training (test data set fraction)
+    -Partitioning method (and corresponding partitioning parameter): 
+        1) "k_fold" : perform a k-fold cross validation by training k models
+                        the partitioning parameter is k. It has to be > 1
+        2) "split" : only one model is trained
+                        the partitioning parameter is test data set fraction (fraction of the data set that won't be used for training). It has to be <= 1
     -Number of epochs
     -Batch size
     -Regularizer parameter L1 (penalty applied to absolute value of weights, 0-0.1)
@@ -25,7 +28,12 @@ Some arguments can be passed:
     -Selected threshold is the value used to compute the background rejection 
 
 
-How to run the program:
+Where the PLOTS are created?
+Several pdfs are produced when the script is run (both if the model is created or loaded). The pdfs should NOT be saved in the git repository. The path to the directory where the pdfs will be saved can be changed in config.py (PDF_SAVE_PATH).
+
+
+How to run the program locally:
 source activate_env.sh
 python3 main.py <config_file>
+
 
