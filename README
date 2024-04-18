@@ -5,7 +5,8 @@ Two different tasks can be performed depending on the configuration file type:
 -A CNN model is defined, trained and tested.
 -A CNN model is loaded and tested.
 
-In order to define, create and test a model, use the config.json file
+**Define, create and test a model**
+In order to define, create and test a model, use the *config.json* file
 Some arguments can be passed:
     -Path to the input file + input file name (the simulations)
     -Additional information to be printed in the output file name
@@ -20,7 +21,8 @@ Some arguments can be passed:
     -Regularizer parameter L2 (penalty applied to square of weights, 0-0.1)
     -Selected threshold is the value used to compute the background rejection (it is just a placeholder, it will be computed again at 50% signal efficiency)
 
-In order to load and test an existing model, use the config_load_model.json file
+**Load and test an existing model**
+In order to load and test an existing model, use the *config_load_model.json* file
 Some arguments can be passed:
     -Path to the input file + input file name (the simulations)
     -Fraction of the data set that won't be used for training (test data set fraction)

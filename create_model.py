@@ -98,7 +98,7 @@ def simple_CNN_training(epochs, batch_size, data_train, data_val, model):
 
 def plot_loss_and_accuracy(models_metrics, output_file = "loss_accuracy_plot.pdf", save_path=PDF_SAVE_PATH):
     """
-    Plot the training and validation loss, as well as accuracy for multiple models and save it to a PDF file.
+    Plot the training and validation loss, as well as accuracy for multiple models (or one model) and save it to a PDF file.
 
     Parameters:
     -----------
