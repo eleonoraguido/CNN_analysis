@@ -3,6 +3,8 @@ import json
 import numpy as np
 from keras.models import model_from_json
 from tensorflow import keras as K
+from config import PDF_SAVE_PATH, LOSS_FUNCTION, OPTIMIZER
+from create_model import compile_model
 
 
 def read_config_type(config_file):
@@ -72,13 +74,14 @@ def read_config_settings(config_file):
 
 
 
-def load_model(config_file):
+def load_model(config_file, fold=None):
     """
     Read input file path from a JSON configuration file.
 
     Parameters:
     ------------
         - config_file (str): The path to the JSON configuration file.
+        - fold (int, optional): The fold number (only in the case case "k_fold"). Defaults to None.
 
     Returns:
     ------------
@@ -94,9 +97,12 @@ def load_model(config_file):
         config = json.load(f)
     input_arg = config.get('model_name')
 
-    # Construct file names
-    h5_file_name = input_arg + ".h5"
-    json_file_name = input_arg + ".json"
+    # Construct file names with fold number, if provided
+    if fold is not None:
+        input_arg = input_arg.replace('*', str(fold))
+
+    h5_file_name = os.path.join(PDF_SAVE_PATH, input_arg + ".h5")
+    json_file_name = os.path.join(PDF_SAVE_PATH, input_arg + ".json")
 
     print("\nStart loading the model files:")
     # Check if the .h5 file exists
@@ -104,29 +110,26 @@ def load_model(config_file):
         # If the .h5 file exists, proceed to check for the .json file
         if os.path.exists(json_file_name):
             # If both files exist, proceed with processing
-            json_file = open(json_file_name, 'r')
-            loaded_model_json = json_file.read()
-            json_file.close()
+            with open(json_file_name, 'r') as json_file:
+                loaded_model_json = json_file.read()
             loaded_model = model_from_json(loaded_model_json)
-            # load weights into new model
+            # Load weights into the new model
             loaded_model.load_weights(h5_file_name)
             print(f"JSON file '{json_file_name}'.json has been read")
             print(f"H5 file '{h5_file_name}'.h5 has been read")
             print("----> Model is loaded from disk.")
-            adam_optimizer = K.optimizers.Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-08, clipnorm=5)
-            rmsprop_optimizer = K.optimizers.RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, clipnorm=5)
-            adagrad_optimizer = K.optimizers.Adagrad(learning_rate=0.01, initial_accumulator_value=0.1, epsilon=1e-08, clipnorm=5)
-            loaded_model.compile(loss='bce', optimizer=adam_optimizer, metrics=["accuracy"])
+            # Compile the model
+            compile_model(loaded_model, loss = LOSS_FUNCTION, optimizer = OPTIMIZER)
             print("----> Model is compiled.\n")
-            return loaded_model    
+            return loaded_model
         else:
             print(f"Error: JSON file '{json_file_name}' does not exist.")
             sys.exit(1)
     else:
         print(f"Error: H5 file '{h5_file_name}' does not exist.")
-        sys.exit(1)
-        
-    
+        sys.exit(1)  
+
+
 
 def compute_bin_edges(x, num_bins):
     """

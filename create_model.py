@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 from tensorflow import keras as K
 from tensorflow.keras import regularizers
@@ -9,17 +10,21 @@ import CNN_model
 from config import PDF_SAVE_PATH
 
 
-def create_CNN_model(l1 = 0.0001, l2 = 0.0001, num_stat = 3):
+def create_CNN_model(l1=0.0001, l2=0.0001, loss='bce', optimizer='adam', num_stat=3):
     """
     Create a Convolutional Neural Network (CNN) model for particle classification.
 
     Parameters:
     -----------
-    L1 : float, optional 
+    - L1 : float, optional. 
         Regularization parameter L1 (penalty applied to the absolute values of the weights).
-    L2 : float, optional
+    - L2 : float, optional.
         Regularization parameter L2 (penalty applied to the square of the weights).
-    num_stat : int, optional
+    - loss : str, optional.
+        Loss function used to wuantify the goodness of predictions. Default option is binary cross-entropy.
+    - optimizer : str, optional.
+        Optimizer to use. Options are 'adam', 'rmsprop', and 'adagrad'. Default is 'adam'.
+    - num_stat : int, optional.
         Number of stations, default is 3.
 
     Returns:
@@ -34,20 +39,49 @@ def create_CNN_model(l1 = 0.0001, l2 = 0.0001, num_stat = 3):
                                                        min_delta=1, cooldown=0, min_lr=0.0)
 
     # Choose the input shape
-    input_traces = Input (shape =[num_stat, 150, 1])  # 3 comulative traces (for 3 SD stations), 150 time bins
-    input_distances = Input (shape =[num_stat, 1]) # distances of each SD station from the shower core
-    input_event = Input (shape =[3]) # theta, S1000, Nstat of the event
-    input_azimuths = Input (shape =[num_stat, 1]) # azimuth of each SD station wrt the SP
-    input_Stot = Input (shape =[num_stat, 1]) # total signal in each station
+    input_traces = Input(shape=[num_stat, 150, 1])  # 3 cumulative traces (for 3 SD stations), 150 time bins
+    input_distances = Input(shape=[num_stat, 1])  # distances of each SD station from the shower core
+    input_event = Input(shape=[3])  # theta, S1000, Nstat of the event
+    input_azimuths = Input(shape=[num_stat, 1])  # azimuth of each SD station wrt the SP
+    input_Stot = Input(shape=[num_stat, 1])  # total signal in each station
 
     CNN_mod = CNN_model.define_layers(kernel_regularizer, input_traces, input_distances, input_event, input_azimuths, input_Stot)
     
-    adam_optimizer = K.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, clipnorm=5)
-    rmsprop_optimizer = K.optimizers.RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, clipnorm=5)
-    adagrad_optimizer = K.optimizers.Adagrad(learning_rate=0.01, initial_accumulator_value=0.1, epsilon=1e-08, clipnorm=5)
-    CNN_mod.compile(loss='bce', optimizer=adam_optimizer, metrics=["accuracy"])
+    compile_model(CNN_mod, loss= loss, optimizer=optimizer)
 
     return CNN_mod
+
+
+def compile_model(model, loss='bce', optimizer='adam', metrics=["accuracy"]):
+    """
+    Compile the given model with specified loss function, optimizer, and metrics.
+
+    Parameters:
+    -----------
+    model : tf.keras.Model
+        The model to be compiled.
+    loss : str, optional
+        The loss function to use. Default is 'bce'.
+    optimizer : str, optional
+        The optimizer to use. Default is 'adam'.
+    metrics : list of str, optional
+        List of metrics to evaluate the model. Default is ["accuracy"].
+
+    Returns:
+    --------
+    None
+    """
+    # Choose optimizer
+    if optimizer == 'adam':
+        chosen_optimizer = K.optimizers.Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, clipnorm=5)
+    elif optimizer == 'rmsprop':
+        chosen_optimizer = K.optimizers.RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, clipnorm=5)
+    elif optimizer == 'adagrad':
+        chosen_optimizer = K.optimizers.Adagrad(learning_rate=0.01, initial_accumulator_value=0.1, epsilon=1e-08, clipnorm=5)
+    else:
+        raise ValueError("Invalid optimizer. Choose 'adam', 'rmsprop', or 'adagrad'.")
+
+    model.compile(loss=loss, optimizer=chosen_optimizer, metrics=metrics)
 
 
 
@@ -150,16 +184,21 @@ def plot_loss_and_accuracy(models_metrics, output_file = "loss_accuracy_plot.pdf
             val_loss = metrics['val_loss']
             train_accuracy = metrics['train_accuracy']
             val_accuracy = metrics['val_accuracy']
-            print(train_loss)
-            print(val_accuracy)
+            #print(train_loss)
+            #print(val_accuracy)
             color = colors[i]  # Use different color for each model
             axs[0].plot(train_loss, alpha=0.8, color=color, label=f'Training, model {model_name}')
             axs[1].plot(train_accuracy, alpha=0.8, color=color, label=f'Training, model {model_name}')
             axs[0].plot(val_loss, linestyle='dotted', alpha=0.8, color=color, label=f'Validation, model {model_name}')
             axs[1].plot(val_accuracy, linestyle='dotted', alpha=0.8, color=color, label=f'Validation, model {model_name}')
 
-    axs[0].legend(loc='upper right')
-    axs[1].legend(loc='upper left')
+    # Create legend entries without plotting any actual data
+    legend_entries = [Line2D([0], [0], linestyle='--', color='black', label='Validation'),
+                  Line2D([0], [0], linestyle='-', color='black', label='Training')]
+
+    # Add legend
+    axs[0].legend(handles=legend_entries, loc='upper right')
+    axs[1].legend(handles=legend_entries, loc='upper left')
 
     plt.tight_layout()
     plt.savefig(full_path)
@@ -198,8 +237,5 @@ def save_CNN_model(model, epochs, batch_size, output_name, l1, l2, save_path=PDF
 
     print("The model will be saved in the directory "+save_path)
     print("The trained model has been saved as "+model_name+".json")
-    print("The weights have been saved in the corresponding .h5 file")
+    print("The weights have been saved in the corresponding .h5 file \n")
 
-
-
-#def cross_validation_training(epochs, batch_size, n_fold, data_train, data_val, model):

@@ -25,15 +25,35 @@ Some arguments can be passed:
 In order to load and test an existing model, use the *config_load_model.json* file
 Some arguments can be passed:
     -Path to the input file + input file name (the simulations)
-    -Fraction of the data set that won't be used for training (test data set fraction)
-    -Name of the model without extension (two files should exist: .h5 and .json)
+    -Partitioning method (and corresponding partitioning parameter): 
+        1) "k_fold" : perform a k-fold cross validation by training k models
+                        the partitioning parameter is k. It has to be > 1
+        2) "split" : only one model is trained
+                        the partitioning parameter is test data set fraction (fraction of the data set that won't be used for training). It has to be <= 1
+        You have to be sure that these choices match the ones made wen creating the model(s).
+    -Name of the model without extension (two files should exist: .h5 and .json). Examples:
+        If you want to load a single model (split partinioning case)
+            "CNN_model_0.0001L1_0.0001L2_phot_prot_maxtheta60_energy_185_195_E50_B64"
+        If you want to load multiple models (k_fold partinioning case): 
+            "CNN_model_0.0001L1_00001L2_phot_prot_maxtheta60_energy_185_195_fold_*_E50_B64"
     -Selected threshold is the value used to compute the background rejection 
 
 
+
+-----------------------------
 Where the PLOTS are created?
 Several pdfs are produced when the script is run (both if the model is created or loaded). The pdfs should NOT be saved in the git repository. The path to the directory where the pdfs will be saved can be changed in config.py (PDF_SAVE_PATH).
 
 
+-----------------------------
+Other options that can be set for the compilation of the model:
+- Optimizer: optimizer to use when the model is compiled. Options are 'adam', 'rmsprop', and 'adagrad'. Default is 'adam'.
+- Loss function: the one used when compiling the model. Default function: binary cross-entropy ('bce').
+Both can be set in config.py (OPTIMIZER, LOSS_FUNCTION).
+**IMPORTANT**: the model is always saved without information about the options to compile it. In order to reproduce the results when loading it, be sure to set the same loss function and optimizer that were used to train it.
+
+
+-----------------------------
 How to run the program locally:
 source activate_env.sh
 python3 main.py <config_file>

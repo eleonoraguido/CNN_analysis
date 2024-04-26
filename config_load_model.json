@@ -1,8 +1,9 @@
 {
     "config_type": "load_model",
-    "model_name" : "model/CNN_model_0.0001L1_0.0001L2_phot_prot_maxtheta60_energy_185_195_E50_B64",
     "input_file": "/data/auger8/DNN_photon_analysis_input_files/dataset/data_phot_prot_merged_shuffle_maxtheta60_lgE185_195.npz",
-    "test_sample_size": 0.1,
+    "model_name" : "CNN_model_0.0001L1_0.0001L2_phot_prot_maxtheta60_energy_185_195_E50_B64",
+    "partitioning_method": "split",
+    "partitioning_param": 0.1,
     "sel_threshold": 0.98,
     "output_plot_path": "path"
 }

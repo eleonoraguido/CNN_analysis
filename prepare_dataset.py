@@ -46,14 +46,8 @@ def load_file(input_file: str)-> dict:
 
 DataSet = namedtuple('DataSet', ['event', 'traces', 'dist', 'azimuth', 'Stot', 'label'])
 
-class DataSets:
-    def __init__(self, train: DataSet = None, validation: DataSet = None, test: DataSet = None):
-        self.train = train
-        self.validation = validation
-        self.test = test
 
-
-def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) -> DataSets:
+def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) -> Dict[str, DataSet]:
     """
     Prepare the data for training, validation, and testing.
 
@@ -68,24 +62,17 @@ def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) 
 
     Returns:
     -----------
-    DataSets
-        Object containing training, validation, and testing data.
+    dict
+        Dictionary containing training, validation, and testing data.
 
     Notes:
     -----------
-    The returned DataSets object contains the following attributes:
-    
-    - train: DataSet
-    - validation: DataSet
-    - test: DataSet
+    The returned dictionary contains the following keys:
+    - 'train': DataSet
+    - 'validation': DataSet
+    - 'test': DataSet
 
-        Each tuple containing the corresponding dataset. It consists of the following arrays:
-        - event: Event-level information (S1000, theta, Nstat).
-        - traces: 3 Traces.
-        - dist: 3 Distances .
-        - azimuth: 3 Azimuths.
-        - Stot: 3 Stot.
-        - label: Labels.
+    Each DataSet contains arrays for event-level information, traces, distances, azimuths, Stot, and labels.
     """
     input1 = input_dict['traces']
     input2 = input_dict['dist']
@@ -94,14 +81,14 @@ def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) 
     input5 = input_dict['Stot']
     labels = input_dict['labels']
 
-     # Print total number of events and count of events with labels 1 and 0
+    # Print total number of events and count of events with labels 1 and 0
     total_events = len(labels)
     label_counts = Counter(labels)
     label_1_count = label_counts[1]
     label_0_count = label_counts[0]
     label_1_percentage = (label_1_count / total_events) * 100
     label_0_percentage = (label_0_count / total_events) * 100
-    
+
     print("Total number of events:", total_events)
     print("Number of events with label 1:", label_1_count, "(", label_1_percentage, "%)")
     print("Number of events with label 0:", label_0_count, "(", label_0_percentage, "%)")
@@ -149,12 +136,12 @@ def split_data(input_dict: dict, test_size: float = 0.2, random_state: int = 0) 
         print("Percentage of data used for testing:", "{:.2f}".format(test_percentage), "%")
 
 
-    return DataSets(train=train_set, validation=val_set, test=test_set)
+    return {'train': train_set, 'validation': val_set, 'test': test_set}
 
 
 
 
-def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> List[Dict[str, DataSet]]:
+def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> Dict[str, Dict[str, DataSet]]:
     """
     Prepare the data for k-fold cross-validation.
 
@@ -169,14 +156,16 @@ def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> 
 
     Returns:
     -----------
-    List[Dict[str, DataSet]]
-        List of datasets, each representing one fold of the cross-validation. 
+    Dict[str, Dict[str, DataSet]]
+        Dictionary of datasets, each representing one fold of the cross-validation. 
         Each dataset contains training, validation, and test sets.
 
     Notes:
     -----------
-    The returned datasets list contains dictionaries, each representing one fold of the cross-validation.
-    Each dictionary has keys 'train', 'validation', and 'test', with corresponding DataSet objects.
+    The returned datasets dictionary contains keys 'fold_1', 'fold_2', ..., 'fold_k',
+    each representing one fold of the cross-validation.
+    Each fold contains a dictionary with keys 'train', 'validation', and 'test',
+    with corresponding DataSet objects.
     Each DataSet object consists of arrays for traces, distances, event information, azimuth, Stot, and labels.
     """
 
@@ -190,10 +179,11 @@ def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> 
     np.random.seed(seed) 
     kfold = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=seed)
     
-    datasets = []  # Array to store datasets for each fold
+    datasets = {}  # Dictionary to store datasets for each fold
 
     for i, (train_idx, test_idx) in enumerate(kfold.split(input1, labels)):
-        print(f"\nFold: {i+1}")
+        fold_name = f"fold_{i+1}"
+        print(f"\n{fold_name}")
 
         # Split data into train and test sets
         x_train, x_test = input1[train_idx], input1[test_idx]
@@ -219,6 +209,6 @@ def split_data_kfold(input_dict: Dict[str, Any], k_fold: int, seed: int = 7) -> 
         print(f"Number of events in test set: {len(test_set.label)}, Percentage: {len(test_set.label)/len(labels) * 100:.2f}%")
 
 
-        datasets.append({'train': train_set, 'validation': val_set, 'test': test_set})
+        datasets[fold_name] = {'train': train_set, 'validation': val_set, 'test': test_set}
 
     return datasets
