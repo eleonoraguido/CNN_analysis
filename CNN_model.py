@@ -1,3 +1,9 @@
+"""
+Author: Eleonora Guido
+Last modification date: 05.2024
+Photon search with a CNN
+"""
+
 from tensorflow import keras as K
 from tensorflow.keras.layers import *
 

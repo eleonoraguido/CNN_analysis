@@ -1,9 +1,9 @@
 {
     "config_type": "load_model",
-    "input_file": "/data/auger8/DNN_photon_analysis_input_files/dataset/data_phot_prot_merged_shuffle_maxtheta60_lgE185_195.npz",
-    "model_name" : "CNN_model_0.0001L1_0.0001L2_phot_prot_maxtheta60_energy_185_195_E50_B64",
-    "partitioning_method": "split",
-    "partitioning_param": 0.1,
+    "input_file": "/data/auger8/PhotonSearch_DNN/DNN_photon_analysis_input_files/dataset/data_phot_prot_merged_shuffle_maxtheta60_lgE185_195.npz",
+    "model_name" : "CNN_model_0.0001L1_0.0001L2_phot_prot_maxtheta60_energy_185_195_fold_*_E50_B64",
+    "partitioning_method": "k_fold",
+    "partitioning_param": 8,
     "sel_threshold": 0.98,
     "output_plot_path": "path"
 }

@@ -1,3 +1,9 @@
+"""
+Author: Eleonora Guido
+Last modification date: 05.2024
+Photon search with a CNN
+"""
+
 import os
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D

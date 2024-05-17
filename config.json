@@ -1,6 +1,6 @@
 {
     "config_type": "create_model",
-    "input_file": "/data/auger8/DNN_photon_analysis_input_files/dataset/data_phot_prot_merged_shuffle_maxtheta60_lgE185_195.npz",
+    "input_file": "/data/auger8/PhotonSearch_DNN/DNN_photon_analysis_input_files/dataset/data_phot_prot_merged_shuffle_maxtheta60_lgE185_195.npz",
     "output_name": "phot_prot_maxtheta60_energy_185_195",
     "partitioning_method": "k_fold",
     "partitioning_param": 8,

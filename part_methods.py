@@ -1,3 +1,9 @@
+"""
+Author: Eleonora Guido
+Last modification date: 05.2024
+Photon search with a CNN
+"""
+
 import sys
 import utils
 import prepare_dataset
@@ -8,7 +14,7 @@ from config import OPTIMIZER, LOSS_FUNCTION
 def run_split_method(part_param, data, config_type, config_file):
     """
     - Perform data splitting to train one model. 
-    - The fraction of data not ot be used for training is passed as argument. 
+    - The fraction of data not to be used for training is passed as argument. 
     - The model is trained.
 
     Parameters:

@@ -1,3 +1,9 @@
+"""
+Author: Eleonora Guido
+Last modification date: 05.2024
+Photon search with a CNN
+"""
+
 import os, sys
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker

@@ -1,4 +1,10 @@
 
+"""
+Author: Eleonora Guido
+Last modification date: 05.2024
+Photon search with a CNN
+"""
+
 import numpy as np
 from typing import List, Dict, Any, Tuple
 from sklearn.model_selection import train_test_split

@@ -1,12 +1,16 @@
+- Author: Eleonora Guido
+- Last modification date: 05.2024
+- Photon search with a CNN
+
 Introduction
 -----------
 
-This program reads a .npz file, previously created by merging together the data of interest 
-from two different particle species (generally photons and protons).
+This program reads a .npz file, previously created by merging together the data of interest. Typically the data are from Offline simulations of two different particle species (generally photons and protons labelled as 1 and 0 respectively).
+- The .npz file can be created starting from Offline simulations with the script in the directory *Read_simulations*.
 
 Two different tasks can be performed depending on the **configuration file type**:
 1) A CNN model is defined, trained and tested.
-2) A CNN model is loaded and tested.
+2) An already existent CNN model is loaded and tested.
 
 
 Task 1: Define, train and test a model
@@ -28,13 +32,13 @@ Use the *config.json* file.
 Some variables can be set in the configuration file:
 - "config_type": string. The type of configuration file. It has to be set to *create_model*.
 - "input_file": string. Absolute path to the input data file + input .npz file name. The files are located in */data/auger8/DNN_photon_analysis_input_files/dataset/* 
-- "output_name": string. Write the particle species, the maximum theta and the energy range following this format: *"output_name" : "phot_prot_maxtheta60_energy_185_195"*. When the model is saved, this additional information will be printed in the name of the saved model to identify it and it will replace <output_name>. 
+- "output_name": string. It contains some information about the data set: the particle species, the maximum theta and the energy range. You have to follow this format: *"output_name" : "phot_prot_maxtheta60_energy_185_195"*. When the model is saved, this information will be printed in the name of the saved model to identify it and it will replace <output_name>. 
 - "partitioning_method": string. Two possible types: 
     1) "k_fold" : data are splitted into k subsets. A k-fold cross validation is performed by training k models. For each one a different fold is held out and used for testing.
     2) "split" : data are splitted into three subsets: training, validation, testing data sets. Only one model is trained and tested. 
 - "partitioning_param": int/float. 
-    - If "partitioning_method" : "k_fold", it is the number of folds. 
-    - If "partitioning_method" : "split", it is the fraction of simulations used for testing (= number of simulations used for validation).
+    - If "partitioning_method" : "k_fold", it is an int, the number of folds k. 
+    - If "partitioning_method" : "split", it is a float, the fraction of simulations used for testing (= number of simulations used for validation).
 - "num_epochs": int. The number of epochs.
 - "batch_size": int. The mini-batch size.
 - "L1_regularizer": float. Regularizer parameter L1 (penalty applied to absolute value of weights, 0-0.1)
@@ -80,7 +84,7 @@ Some variables can be set in the configuration file:
 
 The working directory
 -----------------------------
-- The working directory is NOT the directory where the scripts are located.
+- The working directory is NOT the directory where the scripts are located, as the scripts are also backed up in git repository.
     - Note that the pdfs that are produced when the script is run can be very big (both if the model is created or loaded), then they should NOT be saved in the git repository but in a different working directory.
 - It can be set in the *config.py* file. The variable *PDF_SAVE_PATH* contains the relative path to the working directory.
 - The working directory is where all the outputs are created and, in the case we are using the config file *config_load_model.json* is also where the already existent model to load has to be located.
@@ -92,14 +96,15 @@ Additional options
 Other options that can be set for the compilation of the model (both if the model is created and if it is loaded, as compilation options are not included in the saved model):
 - Optimizer: optimizer to use when the model is compiled. Options are 'adam', 'rmsprop', and 'adagrad'. Default is 'adam'.
 - Loss function: the one used when compiling the model. Default function: binary cross-entropy ('bce').
+
 Both can be set in config.py (OPTIMIZER, LOSS_FUNCTION).
+
 **IMPORTANT**: the model is always saved without information about the options to compile it. In order to reproduce the results when loading it, be sure to set the same loss function and optimizer that were used to train it.
 
 
 Notes
 ---------------------------
-- When the k-fold cross validation is performed, k files are created with both the extensions .json and .h5 . It is not actually necessary to create k .json files, as the model architecture is the same and only the weights are different. However, the files are very small and this is the simplest extension of the case with just one model.
-
+- When the k-fold cross validation is performed, k files are created with both the extensions .json and .h5 . It is not actually necessary to create k .json files, as the model architecture is the same and only the weights are different (as they depend on the folds used for training). However, the files are very small and this is the simplest extension of the case with just one model.
 
 -----------------------------
 How to run the program locally:
@@ -109,3 +114,16 @@ How to run the program locally:
 ```python3 main.py <config_file>```
 
 
+
+
+Where the benchmark models are stored
+------------------------------
+The trained benchmark models (reference results) are located in *CNN_analysis_output/benchmark_models/*.
+
+
+
+Documentation
+------------------------------
+https://keras.io/api/layers/convolution_layers/
+https://www.tensorflow.org/api_docs/python/tf
+https://scikit-learn.org/stable/user_guide.html

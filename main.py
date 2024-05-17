@@ -1,6 +1,7 @@
 """
-Eleonora Guido
-04.2024, Photon search with a CNN
+Author: Eleonora Guido
+Last modification date: 05.2024
+Photon search with a CNN
 """
 
 import sys
